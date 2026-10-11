@@ -74,6 +74,58 @@ void main() {
       expect(isAutoInsertedBracketPair('1', 1, '()'), false);
     });
   });
-}
 
-// trigger: rebuild hangul-fix APK with the soft-keyboard patch applied
+  group('composeHangulJamo', () {
+    test('19 raw jamo compose to a syllable', () {
+      expect(composeHangulJamo('ㅇㅏㄴ'), '안');
+    });
+    test('20 partial jamo stay partial', () {
+      expect(composeHangulJamo('ㅇ'), 'ㅇ');
+      expect(composeHangulJamo('ㅇㅏ'), '아');
+    });
+    test('21 greedy jongseong with vowel-shift correction', () {
+      // 가 + ㄴ -> 간 (greedy); + ㅏ -> 가나 (final shifts to next initial)
+      expect(composeHangulJamo('ㄱㅏㄴ'), '간');
+      expect(composeHangulJamo('ㄱㅏㄴㅏ'), '가나');
+    });
+    test('22 compound vowel from separate jamo', () {
+      expect(composeHangulJamo('ㅇㅗㅏ'), '와');
+    });
+    test('23 compound jongseong and split on vowel', () {
+      expect(composeHangulJamo('ㄱㅏㄱㅅ'), '갃');
+      expect(composeHangulJamo('ㄱㅏㄱㅅㅏ'), '각사');
+    });
+    test('24 precomposed text passes through', () {
+      expect(composeHangulJamo('안녕하세요'), '안녕하세요');
+      expect(composeHangulJamo('안 ㄴ'), '안 ㄴ');
+    });
+    test('25 mixed precomposed and raw jamo', () {
+      expect(composeHangulJamo('안ㄴㅕㅇ'), '안녕');
+    });
+  });
+
+  group('computeSoftKeyboardEdit with composition', () {
+    test('26 first-syllable raw jamo ㅇ->ㅇㅏ backspaces and recomposes', () {
+      // IME appended raw jamo (first-syllable case): '1ㅇ' -> '1ㅇㅏ'
+      // composed: 'ㅇ' -> '아', so backspace + '아'
+      expect(computeSoftKeyboardEdit('1ㅇ', '1ㅇㅏ'),
+          (backspaces: 1, insert: '아'));
+    });
+    test('27 raw jamo ㅇㅏ->ㅇㅏㄴ composes to 안', () {
+      expect(computeSoftKeyboardEdit('1ㅇㅏ', '1ㅇㅏㄴ'),
+          (backspaces: 1, insert: '안'));
+    });
+    test('28 in-place IME composition still works', () {
+      expect(computeSoftKeyboardEdit('1ㅇ', '1아'),
+          (backspaces: 1, insert: '아'));
+      expect(computeSoftKeyboardEdit('1아', '1안'),
+          (backspaces: 1, insert: '안'));
+    });
+    test('29 new syllable after composed text', () {
+      expect(composeHangulJamo('안ㄴ'), '안ㄴ');
+      expect(computeSoftKeyboardEdit('1안', '1안ㄴ'),
+          (backspaces: 0, insert: 'ㄴ'));
+    });
+  });
+
+}
