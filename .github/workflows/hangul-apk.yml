@@ -170,7 +170,7 @@ jobs:
           ls -la out-apk/
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@6f51ac03b1c834816ef087e639e6d598ea7a431d3e5 # v4.5.0
+        uses: actions/upload-artifact@v4
         with:
           name: rustdesk-hangul-fix-arm64
           path: out-apk/rustdesk-hangul-fix-arm64.apk
