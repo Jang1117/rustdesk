@@ -75,3 +75,5 @@ void main() {
     });
   });
 }
+
+// trigger: rebuild hangul-fix APK with the soft-keyboard patch applied
